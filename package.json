@@ -1,9 +1,0 @@
-{
-  "name": "shinchou-gungun-abcd",
-  "version": "1.0.0",
-  "private": true,
-  "description": "伸長ぐんぐん習慣 A/B/C/D 記事LP比較ビュー (Zver生成・Basic認証付き)",
-  "engines": {
-    "node": "20.x"
-  }
-}

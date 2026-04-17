@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Zver ABCD Compare — 認証</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.auth-card {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-top: 4px solid #ff8a65;
+  border-radius: 12px;
+  padding: 32px 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0,0,0,.4);
+}
+.icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
+h1 {
+  font-size: 18px;
+  margin: 0 0 6px 0;
+  text-align: center;
+  font-weight: 700;
+}
+.sub {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.form-row { margin-bottom: 14px; }
+label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+input[type=password] {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a0a0f;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color .15s;
+}
+input[type=password]:focus { border-color: #ff8a65; }
+button {
+  width: 100%;
+  padding: 12px;
+  background: #ff8a65;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+button:hover { background: #ff7043; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.msg {
+  font-size: 12px;
+  margin-top: 12px;
+  text-align: center;
+  min-height: 18px;
+}
+.msg.error { color: #ff8a65; }
+.msg.ok { color: #69f0ae; }
+.footer {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  margin-top: 24px;
+}
+</style>
+</head>
+<body>
+<div class="auth-card">
+  <div class="icon">🔒</div>
+  <h1>Zver ABCD Compare</h1>
+  <div class="sub">伸長ぐんぐん習慣 / 5月HIT仮説検証</div>
+  <div class="form-row">
+    <label for="pw">パスワード</label>
+    <input type="password" id="pw" placeholder="パスワードを入力" autofocus autocomplete="off">
+  </div>
+  <button id="submit">認証して開く</button>
+  <div class="msg" id="msg"></div>
+  <div class="footer">AI Park / Zver v1.0</div>
+</div>
+<script>
+const EXPECTED_HASH = '2470bf05327292a280e03a47b2654173a37852aa4e973f68b9dc43af2601340c';
+const STORAGE_KEY = 'zver_abcd_auth';
+const REDIRECT_TARGET = 'app.html';
+
+async function sha256Hex(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 認証済なら即リダイレクト
+if (sessionStorage.getItem(STORAGE_KEY) === EXPECTED_HASH) {
+  location.replace(REDIRECT_TARGET);
+}
+
+async function tryAuth() {
+  const input = document.getElementById('pw');
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('submit');
+  const pw = input.value.trim();
+  if (!pw) {
+    msg.textContent = 'パスワードを入力してください';
+    msg.className = 'msg error';
+    return;
+  }
+  btn.disabled = true;
+  msg.textContent = '認証中...';
+  msg.className = 'msg';
+  const hash = await sha256Hex(pw);
+  if (hash === EXPECTED_HASH) {
+    msg.textContent = '✅ 認証成功';
+    msg.className = 'msg ok';
+    sessionStorage.setItem(STORAGE_KEY, EXPECTED_HASH);
+    setTimeout(() => location.replace(REDIRECT_TARGET), 400);
+  } else {
+    msg.textContent = '❌ パスワードが違います';
+    msg.className = 'msg error';
+    btn.disabled = false;
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('submit').addEventListener('click', tryAuth);
+document.getElementById('pw').addEventListener('keypress', e => {
+  if (e.key === 'Enter') tryAuth();
+});
+</script>
+</body>
+</html>
