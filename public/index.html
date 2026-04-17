@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ABCD Compare — 伸長ぐんぐん習慣 / shinchou-gungun</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+header {
+  background: #1a1a24;
+  border-bottom: 1px solid #2a2a4a;
+  padding: 12px 20px;
+}
+header h1 { font-size: 18px; margin: 0 0 4px 0; font-weight: 700; }
+header .sub { font-size: 12px; color: #888; }
+
+/* Tabs */
+.tabs {
+  background: #12121a;
+  border-bottom: 1px solid #2a2a4a;
+  display: flex;
+  gap: 2px;
+  padding: 0 20px;
+}
+.tab-btn {
+  background: transparent;
+  color: #888;
+  border: none;
+  padding: 10px 20px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+.tab-btn.active { color: #fff; border-bottom-color: #ff8a65; }
+.tab-btn:hover { color: #ccc; }
+
+/* Tab Panels */
+.tab-panel { display: none; flex: 1; min-height: 0; }
+.tab-panel.active { display: flex; flex-direction: column; }
+
+/* ============================================ */
+/* Tab 1: 概要 */
+/* ============================================ */
+#tab-overview { padding: 20px; overflow-y: auto; }
+
+.concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.concept-card {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 14px;
+  border-top: 4px solid;
+}
+.concept-card.A { border-top-color: #9e9e9e; }
+.concept-card.B { border-top-color: #64b5f6; }
+.concept-card.C { border-top-color: #ffb74d; }
+.concept-card.D { border-top-color: #ba68c8; }
+.concept-card h3 { font-size: 16px; margin: 0 0 6px 0; }
+.concept-card .layer { font-size: 11px; color: #888; margin-bottom: 6px; font-weight: bold; }
+.concept-card .lv { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+.concept-card .lv-2 { background: #2196f3; }
+.concept-card .lv-3 { background: #ff5722; }
+.concept-card .tagline { font-size: 13px; color: #ff8a65; font-weight: bold; margin: 8px 0; border-left: 3px solid #ff8a65; padding-left: 8px; }
+.concept-card .persona { font-size: 11px; color: #aaa; margin-top: 6px; line-height: 1.6; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: #12121a;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+}
+.stat-card .label { color: #888; margin-bottom: 2px; }
+.stat-card .value { font-size: 16px; font-weight: bold; color: #e0e0e0; font-family: monospace; }
+.stat-card.good .value { color: #69f0ae; }
+
+.ward-row {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.ward-row h3 { margin: 0 0 10px; font-size: 13px; color: #ff8a65; }
+.ward-row table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ward-row th, .ward-row td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #2a2a4a; }
+.ward-row th { color: #888; font-weight: 600; }
+.ward-row td { color: #ccc; font-family: monospace; }
+.ward-row td.pass { color: #69f0ae; }
+
+/* ============================================ */
+/* Tab 2: 全記事プレビュー (4iframe横並び) */
+/* ============================================ */
+#tab-full { display: none; flex: 1; flex-direction: column; min-height: 0; }
+#tab-full.active { display: flex; }
+
+.full-article-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #12121a;
+  border-bottom: 1px solid #2a2a4a;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.fa-view-btn {
+  background: #2a2a4a;
+  color: #ccc;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.fa-view-btn.active { background: #ff8a65; color: #000; }
+.fa-sync-btn {
+  background: #2a2a4a;
+  color: #ccc;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: auto;
+  font-weight: 600;
+}
+.fa-sync-btn.on { background: #69f0ae; color: #000; }
+
+.full-article-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #0a0a0f;
+  border-bottom: 1px solid #2a2a4a;
+}
+.full-article-label {
+  padding: 8px 12px;
+  border-right: 1px solid #2a2a4a;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.full-article-label:last-child { border-right: none; }
+.fa-badge {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 24px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #000;
+}
+.fa-badge-A { background: #bdbdbd; }
+.fa-badge-B { background: #64b5f6; }
+.fa-badge-C { background: #ffb74d; }
+.fa-badge-D { background: #ba68c8; }
+.fa-concept { font-weight: bold; color: #e0e0e0; }
+.fa-layer { color: #888; font-size: 11px; margin-left: auto; }
+
+.full-article-frames {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.frame-wrap {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-right: 2px solid #2a2a4a;
+  background: #fff;
+}
+.frame-wrap:last-child { border-right: none; }
+.frame-wrap iframe {
+  width: 100%;
+  border: none;
+  display: block;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* 単独表示モード */
+.full-article-frames.mode-A > .frame-wrap:not(#faFrameA),
+.full-article-frames.mode-B > .frame-wrap:not(#faFrameB),
+.full-article-frames.mode-C > .frame-wrap:not(#faFrameC),
+.full-article-frames.mode-D > .frame-wrap:not(#faFrameD) { display: none; }
+.full-article-frames.mode-AB { grid-template-columns: repeat(2, 1fr); }
+.full-article-frames.mode-AB > #faFrameC,
+.full-article-frames.mode-AB > #faFrameD { display: none; }
+
+/* ============================================ */
+/* Tab 3: N1 × BeliefShift */
+/* ============================================ */
+#tab-n1 { padding: 20px; overflow-y: auto; }
+.n1-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.n1-card {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-top: 4px solid;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 12px;
+}
+.n1-card.A { border-top-color: #9e9e9e; }
+.n1-card.B { border-top-color: #64b5f6; }
+.n1-card.C { border-top-color: #ffb74d; }
+.n1-card.D { border-top-color: #ba68c8; }
+.n1-card h3 { margin: 0 0 4px; font-size: 15px; }
+.n1-card .persona-name { color: #888; margin-bottom: 12px; font-size: 11px; }
+.n1-card dl { margin: 0; }
+.n1-card dt { color: #888; font-size: 10px; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
+.n1-card dd { margin: 4px 0 0; color: #e0e0e0; line-height: 1.6; }
+.belief-before { background: #2a1a1a; border-left: 3px solid #ff8a65; padding: 6px 10px; border-radius: 3px; font-size: 11px; line-height: 1.5; }
+.belief-after { background: #1a2a1a; border-left: 3px solid #69f0ae; padding: 6px 10px; border-radius: 3px; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+.hook-quote {
+  background: #12121a;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: "Hiragino Sans", sans-serif;
+  white-space: pre-wrap;
+  font-size: 11px;
+  line-height: 1.7;
+  border-left: 3px solid #ff8a65;
+  margin-top: 6px;
+}
+
+/* ============================================ */
+/* Tab 4: 変更詳細 */
+/* ============================================ */
+#tab-diff { padding: 20px; overflow-y: auto; }
+.diff-section {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.diff-section h3 { margin: 0 0 10px; font-size: 14px; }
+.diff-section .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; margin-left: 8px; font-weight: bold; }
+.badge-B { background: #64b5f6; color: #000; }
+.badge-C { background: #ffb74d; color: #000; }
+.badge-D { background: #ba68c8; color: #000; }
+.diff-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.diff-table th, .diff-table td { padding: 6px 8px; border-bottom: 1px solid #2a2a4a; text-align: left; vertical-align: top; }
+.diff-table th { color: #888; background: #12121a; font-weight: 600; }
+.diff-table td code { background: #0a0a0f; padding: 1px 5px; border-radius: 2px; font-size: 10px; color: #ffb74d; }
+.diff-table .bid { font-family: monospace; color: #888; }
+.diff-table .change { color: #e0e0e0; line-height: 1.5; }
+
+/* ============================================ */
+/* Tab 5: 仮説スコア */
+/* ============================================ */
+#tab-score { padding: 20px; overflow-y: auto; }
+.score-table {
+  background: #1a1a24;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.score-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.score-table th, .score-table td { padding: 10px; border-bottom: 1px solid #2a2a4a; text-align: left; }
+.score-table th { color: #888; font-size: 11px; background: #12121a; }
+.score-bar { display: inline-block; width: 140px; height: 10px; background: #2a2a4a; border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 8px; }
+.score-fill { height: 100%; background: linear-gradient(90deg, #64b5f6, #69f0ae); }
+.variant-badge { display: inline-block; width: 20px; height: 20px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 11px; color: #000; margin-right: 6px; }
+.variant-A { background: #bdbdbd; }
+.variant-B { background: #64b5f6; }
+.variant-C { background: #ffb74d; }
+.variant-D { background: #ba68c8; }
+
+.verdict-pass { color: #69f0ae; font-weight: bold; }
+
+.recommendation {
+  background: #1a2a1a;
+  border: 1px solid #2a4a2a;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.recommendation h3 { color: #69f0ae; margin-top: 0; }
+
+/* Small viewport */
+@media (max-width: 1400px) {
+  .concepts-grid, .n1-grid, .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .full-article-labels, .full-article-frames { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔬 ABCD Compare — 伸長ぐんぐん習慣 / 5月HIT仮説検証</h1>
+  <div class="sub">A-canonical(4月HIT実績 CPA ¥4,528 / CVR 2.36%) vs B/C/D (5月向けN1別派生)</div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn" data-tab="overview">📊 概要</button>
+  <button class="tab-btn active" data-tab="full">🎨 全記事プレビュー</button>
+  <button class="tab-btn" data-tab="n1">👥 N1 × BeliefShift</button>
+  <button class="tab-btn" data-tab="diff">🔍 変更詳細</button>
+  <button class="tab-btn" data-tab="score">📈 仮説スコア</button>
+</div>
+
+<!-- Tab 1: 概要 -->
+<div class="tab-panel" id="tab-overview">
+  <div class="concepts-grid">
+    <div class="concept-card A">
+      <div class="layer">A / 潜在層（HIT実績）</div>
+      <h3>牛乳神話の終わり</h3>
+      <div><span class="lv lv-3">Lv.3</span></div>
+      <div class="tagline">牛乳だけじゃ、伸びない。</div>
+      <div class="persona">中村陽子(38) / 小5男子。「牛乳＝カルシウム＝骨が伸びる」の固定観念。季節hook あり（4月HIT）。</div>
+    </div>
+    <div class="concept-card B">
+      <div class="layer">B / 顕在層</div>
+      <h3>選ぶ基準が違った</h3>
+      <div><span class="lv lv-2">Lv.2</span></div>
+      <div class="tagline">mgじゃない。Wで決まる。</div>
+      <div class="persona">佐々木葵(36) / 中1男子(部活補欠)。ノビルン・セノビック比較済。成分量で選べば正解だと思ってる。</div>
+    </div>
+    <div class="concept-card C">
+      <div class="layer">C / 準顕在層</div>
+      <h3>飲ませる前提を覆す</h3>
+      <div><span class="lv lv-2">Lv.2</span></div>
+      <div class="tagline">飲ませないで、食べさせる。</div>
+      <div class="persona">高橋麻里(39) / 小6男子(反抗期)。過去セノビック挫折。「飲まない子にサプリは無理」と諦めている。</div>
+    </div>
+    <div class="concept-card D">
+      <div class="layer">D / 潜在層(通年版)</div>
+      <h3>牛乳神話の終わり_通年版</h3>
+      <div><span class="lv lv-3">Lv.3</span></div>
+      <div class="tagline">牛乳だけじゃ、伸びない。</div>
+      <div class="persona">中村陽子(38) / 同一ペルソナ。A記事のLv.3コンセプト継承 + 季節語のみ除去(最小差分)。</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card good"><div class="label">変更ブロック数合計</div><div class="value">16 / 上限20</div></div>
+    <div class="stat-card good"><div class="label">勝ちAtom保持</div><div class="value">5/5 × 3案</div></div>
+    <div class="stat-card good"><div class="label">新規画像生成</div><div class="value">0枚 / 上限9</div></div>
+    <div class="stat-card good"><div class="label">Gate-L3 総合</div><div class="value">15/15 PASS</div></div>
+  </div>
+
+  <div class="ward-row">
+    <h3>🛡️ ハードガード (Gate-L3)</h3>
+    <table>
+      <tr><th>基準</th><th>閾値</th><th>B</th><th>C</th><th>D</th><th>結果</th></tr>
+      <tr><td>dataConfidence</td><td>≥ 0.50</td><td>0.55</td><td>0.65</td><td>0.75</td><td class="pass">PASS</td></tr>
+      <tr><td>変更ブロック数(単体)</td><td>≤ 20</td><td>8</td><td>7</td><td>1</td><td class="pass">PASS</td></tr>
+      <tr><td>hypothesis_score</td><td>≥ 0.45</td><td>0.63</td><td>0.72</td><td>0.73</td><td class="pass">PASS</td></tr>
+      <tr><td>勝ちAtom保持(#4/92/94/112/137)</td><td>5/5</td><td>5/5</td><td>5/5</td><td>5/5</td><td class="pass">PASS</td></tr>
+      <tr><td>SB構造(sb-part-id)</td><td>18 unique</td><td>18</td><td>18</td><td>18</td><td class="pass">PASS</td></tr>
+      <tr><td>SB構造(sb-custom-part hash)</td><td>42 unique</td><td>42</td><td>42</td><td>42</td><td class="pass">PASS</td></tr>
+      <tr><td>季節語残留(「新学期」「春休み」等)</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pass">PASS</td></tr>
+    </table>
+  </div>
+
+  <div class="ward-row">
+    <h3>🎯 5月運用推奨</h3>
+    <table>
+      <tr><td style="color:#ffb74d;font-weight:bold;width:100px">Week 1</td><td>A + D 並走 — 季節hook除去の真の寄与を測定</td></tr>
+      <tr><td style="color:#ffb74d;font-weight:bold">Week 2+</td><td>B / C 投入 — 層別CTR/CVR比較で最適配信比率決定</td></tr>
+      <tr><td style="color:#ffb74d;font-weight:bold">判定軸</td><td>D ≥ A → 季節hook寄与薄 / D < A → 4月固有の春カレンダー効果</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Tab 2: 全記事プレビュー -->
+<div class="tab-panel active" id="tab-full">
+  <div class="full-article-toolbar">
+    <button class="fa-view-btn active" data-faview="all">4列横並び</button>
+    <button class="fa-view-btn" data-faview="AB">A × B</button>
+    <button class="fa-view-btn" data-faview="A">A のみ</button>
+    <button class="fa-view-btn" data-faview="B">B のみ</button>
+    <button class="fa-view-btn" data-faview="C">C のみ</button>
+    <button class="fa-view-btn" data-faview="D">D のみ</button>
+    <button class="fa-sync-btn on" id="faSyncBtn">🔗 同期スクロール: ON</button>
+  </div>
+  <div class="full-article-labels">
+    <div class="full-article-label"><span class="fa-badge fa-badge-A">A</span><span class="fa-concept">牛乳神話の終わり</span><span class="fa-layer">潜在/Lv.3/HIT</span></div>
+    <div class="full-article-label"><span class="fa-badge fa-badge-B">B</span><span class="fa-concept">選ぶ基準が違った</span><span class="fa-layer">顕在/Lv.2</span></div>
+    <div class="full-article-label"><span class="fa-badge fa-badge-C">C</span><span class="fa-concept">飲ませる前提を覆す</span><span class="fa-layer">準顕在/Lv.2</span></div>
+    <div class="full-article-label"><span class="fa-badge fa-badge-D">D</span><span class="fa-concept">牛乳神話_通年版</span><span class="fa-layer">潜在/Lv.3/最小差分</span></div>
+  </div>
+  <div class="full-article-frames mode-all" id="faFrames">
+    <div class="frame-wrap" id="faFrameA"><iframe id="faIframeA" scrolling="no" src="A.html"></iframe></div>
+    <div class="frame-wrap" id="faFrameB"><iframe id="faIframeB" scrolling="no" src="B.html"></iframe></div>
+    <div class="frame-wrap" id="faFrameC"><iframe id="faIframeC" scrolling="no" src="C.html"></iframe></div>
+    <div class="frame-wrap" id="faFrameD"><iframe id="faIframeD" scrolling="no" src="D.html"></iframe></div>
+  </div>
+</div>
+
+<!-- Tab 3: N1 × BeliefShift -->
+<div class="tab-panel" id="tab-n1">
+  <div class="n1-grid">
+    <div class="n1-card A">
+      <h3>A / 潜在層 (HIT)</h3>
+      <div class="persona-name">中村陽子(38) / 小5男子</div>
+      <dl>
+        <dt>固定観念</dt><dd>「牛乳を飲ませてカルシウム摂らせていれば伸びる」</dd>
+        <dt>BeliefShift</dt>
+        <dd>
+          <div class="belief-before">before: 牛乳＝カルシウム＝身長</div>
+          <div class="belief-after">after: 吸収率20%。材料+スイッチ+指令の3つが必要</div>
+        </dd>
+        <dt>hook</dt>
+        <dd class="hook-quote">新学期に向けて 春休みのうちから 成長期対策🌸 甘い味のサプリはもう卒業！ 調味料感覚で使えちゃう！</dd>
+        <dt>5月懸念</dt><dd style="color:#ff8a65">季節hook陳腐化 → 5月以降CPA悪化リスク</dd>
+      </dl>
+    </div>
+    <div class="n1-card B">
+      <h3>B / 顕在層</h3>
+      <div class="persona-name">佐々木葵(36) / 中1男子(部活補欠)</div>
+      <dl>
+        <dt>固定観念</dt><dd>「成分量の多さで選べば間違いない」</dd>
+        <dt>BeliefShift</dt>
+        <dd>
+          <div class="belief-before">before: mgの多さが正解</div>
+          <div class="belief-after">after: Wで吸収されるかで決まる。単体は20%しか吸収されない</div>
+        </dd>
+        <dt>hook</dt>
+        <dd class="hook-quote">「ノビルンか、セノビックか」で迷ってるママへ。
+成分表の"mg"を見比べていませんか？
+実は、カルシウム単体だと20%しか吸収されない。
+"W配合"で選ばないと、せっかくの成分が届かないんです。</dd>
+        <dt>狙い</dt><dd>競合比較中のママの比較軸そのものをpivot</dd>
+      </dl>
+    </div>
+    <div class="n1-card C">
+      <h3>C / 準顕在層</h3>
+      <div class="persona-name">高橋麻里(39) / 小6男子(反抗期)</div>
+      <dl>
+        <dt>固定観念</dt><dd>「サプリは子供が飲んでくれないから無理」</dd>
+        <dt>BeliefShift</dt>
+        <dd>
+          <div class="belief-before">before: 飲ませる=バトル=続かない</div>
+          <div class="belief-after">after: 飲ませるんじゃない。料理の"調味料"として食べさせる</div>
+        </dd>
+        <dt>hook</dt>
+        <dd class="hook-quote">「サプリ飲みなさい！」のバトル、もうやめたい。
+反抗期の息子、甘いサプリも飽きて続かない。
+でも何もしないと後悔しそう…
+実は、"飲ませない"成長期サポートがあります。
+無味無臭パウダーだから、ごはんに混ぜるだけ。
+子供は気づきません。</dd>
+        <dt>狙い</dt><dd>過去挫折経験ママに「飲ませる前提」からの解放</dd>
+      </dl>
+    </div>
+    <div class="n1-card D">
+      <h3>D / 潜在層 (通年版)</h3>
+      <div class="persona-name">中村陽子(38) / A継承</div>
+      <dl>
+        <dt>固定観念</dt><dd>A同一：「牛乳を飲ませていれば伸びる」</dd>
+        <dt>BeliefShift</dt>
+        <dd>
+          <div class="belief-before">before: 牛乳＝カルシウム＝身長 (A同一)</div>
+          <div class="belief-after">after: 吸収率20%。材料+スイッチ+指令が必要 (A同一)</div>
+        </dd>
+        <dt>hook</dt>
+        <dd class="hook-quote">カルシウムを摂らせているのに、
+周りの子にどんどん抜かされていく——
+実は、牛乳1杯のカルシウム吸収率は20%。
+材料だけじゃ骨は伸びない。
+"指令"を出す核酸が必要だったんです。
+小児科医と共同開発の"調味料"パウダー。</dd>
+        <dt>狙い</dt><dd>A記事の世界観を残し季節語のみ除去で通年化</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 4: 変更詳細 -->
+<div class="tab-panel" id="tab-diff">
+  <div class="diff-section">
+    <h3>B案「選ぶ基準が違った」<span class="badge badge-B">B / 10 patches / 8 blocks</span></h3>
+    <table class="diff-table">
+      <tr><th>#</th><th>block</th><th class="change">変更内容</th></tr>
+      <tr><td>1</td><td class="bid">b0001</td><td class="change">hook全差替：新学期🌸 → 「ノビルンか、セノビックか」で迷ってるママへ</td></tr>
+      <tr><td>2</td><td class="bid">b0003</td><td class="change">「栗原恵さんがおすすめ」→「栗原恵が"選んだ"のは」</td></tr>
+      <tr><td>3</td><td class="bid">b0005a</td><td class="change">「成長期悩みを解決」→「成分表を比較し尽くして戻ってくる」</td></tr>
+      <tr><td>4</td><td class="bid">b0005b</td><td class="change">「する人が続出」→「人が続出」</td></tr>
+      <tr><td>5</td><td class="bid">b0018</td><td class="change">「甘い成長期サプリは続かない🥲」→「成分表を見比べるのに疲れた😮‍💨」</td></tr>
+      <tr><td>6</td><td class="bid">b0034</td><td class="change">「料理に混ぜるだけ？」→「比較の答えは、「混ぜるだけ」でした。」</td></tr>
+      <tr><td>7</td><td class="bid">b0069</td><td class="change">POINT①「子供にバレない」→「吸収設計①：Wで吸収される」</td></tr>
+      <tr><td>8</td><td class="bid">b0095</td><td class="change">「実際に使ってみました！」→「ノビルンから乗り換えた私。選び直して試してみました！」</td></tr>
+      <tr><td>9</td><td class="bid">b0176a</td><td class="change">「後悔しないためにも、」→「成分表の比較は今日で終わりに。」</td></tr>
+      <tr><td>10</td><td class="bid">b0176b</td><td class="change">「今できる対策をしてあげてください！」→「「基準」で選んであげてください！」</td></tr>
+    </table>
+  </div>
+  <div class="diff-section">
+    <h3>C案「飲ませる前提を覆す」<span class="badge badge-C">C / 9 patches / 7 blocks</span></h3>
+    <table class="diff-table">
+      <tr><th>#</th><th>block</th><th class="change">変更内容</th></tr>
+      <tr><td>1</td><td class="bid">b0001</td><td class="change">hook全差替：新学期🌸 → 「サプリ飲みなさい！」のバトル、もうやめたい</td></tr>
+      <tr><td>2</td><td class="bid">b0005a</td><td class="change">「成長期悩みを解決」→「「サプリバトル」を手放す」</td></tr>
+      <tr><td>3</td><td class="bid">b0005b</td><td class="change">「する人が続出」→「ママが続出」</td></tr>
+      <tr><td>4</td><td class="bid">b0018</td><td class="change">「甘い成長期サプリは続かない🥲」→「甘いサプリも結局続かない🥲反抗期でバトルばっかり」</td></tr>
+      <tr><td>5</td><td class="bid">b0034</td><td class="change">「料理に混ぜるだけ？」→「"飲ませない"から、続くんです。」</td></tr>
+      <tr><td>6</td><td class="bid">b0066</td><td class="change">「応援してくれる」→「気づかず伸びて、バトルなく応援してくれる」</td></tr>
+      <tr><td>7</td><td class="bid">b0077</td><td class="change">「無理なく続けられて」→「バトルなく続いて」</td></tr>
+      <tr><td>8</td><td class="bid">b0176a</td><td class="change">「後悔しないためにも、」→「バトルのない成長期を、」</td></tr>
+      <tr><td>9</td><td class="bid">b0176b</td><td class="change">「今できる対策をしてあげてください！」→「今月から始めてあげてください！」</td></tr>
+    </table>
+  </div>
+  <div class="diff-section">
+    <h3>D案「牛乳神話の終わり_通年版」<span class="badge badge-D">D / 1 patch / 1 block（最小差分）</span></h3>
+    <table class="diff-table">
+      <tr><th>#</th><th>block</th><th class="change">変更内容</th></tr>
+      <tr><td>1</td><td class="bid">b0001</td><td class="change">hook全差替：新学期🌸 → カルシウムは摂らせているのに、周りの子にどんどん抜かされていく—— 牛乳だけじゃ、伸びない。</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Tab 5: 仮説スコア -->
+<div class="tab-panel" id="tab-score">
+  <div class="score-table">
+    <table>
+      <tr>
+        <th>案</th><th>層</th><th>Lv</th><th>hypothesis_score</th><th>dataConfidence</th><th>変更数</th><th>Gate-L3</th>
+      </tr>
+      <tr>
+        <td><span class="variant-badge variant-A">A</span>牛乳神話の終わり</td>
+        <td>潜在</td><td>Lv.3</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:100%"></span></span>HIT実証(基準)</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:75%"></span></span>0.75</td>
+        <td>0 (base)</td>
+        <td class="verdict-pass">HIT実績</td>
+      </tr>
+      <tr>
+        <td><span class="variant-badge variant-B">B</span>選ぶ基準が違った</td>
+        <td>顕在</td><td>Lv.2</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:63%"></span></span>0.63</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:55%"></span></span>0.55</td>
+        <td>8</td>
+        <td class="verdict-pass">PASS</td>
+      </tr>
+      <tr>
+        <td><span class="variant-badge variant-C">C</span>飲ませる前提を覆す</td>
+        <td>準顕在</td><td>Lv.2</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:72%"></span></span>0.72</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:65%"></span></span>0.65</td>
+        <td>7</td>
+        <td class="verdict-pass">PASS</td>
+      </tr>
+      <tr>
+        <td><span class="variant-badge variant-D">D</span>牛乳神話_通年版</td>
+        <td>潜在</td><td>Lv.3</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:73%"></span></span>0.73</td>
+        <td><span class="score-bar"><span class="score-fill" style="width:75%"></span></span>0.75</td>
+        <td>1</td>
+        <td class="verdict-pass">PASS</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="recommendation">
+    <h3>💡 5月運用推奨（CMO判定）</h3>
+    <p><strong>Week 1</strong>: A + D 並走 — 季節hook除去の真の寄与を測定。D ≥ A なら季節影響薄、D < A なら4月固有の春カレンダー効果。</p>
+    <p><strong>Week 2+</strong>: B / C を投入 — 顕在/準顕在層の反応を実測。hypothesis_score 順序は C(0.72) ≈ D(0.73) > B(0.63)。</p>
+    <p><strong>注</strong>: 全案で勝ちAtom(栗原恵/管理栄養士98%/Yomite NEWS/国内工場/1食16円) は完全保持。画像生成は0枚で完結（既存CDN webpを継続）。</p>
+  </div>
+</div>
+
+<script>
+// タブ切替
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
+    if (target === 'full') setTimeout(initFullArticle, 300);
+  });
+});
+
+// 4iframe 同期スクロール
+var _faSyncInitialized = false;
+var _faSyncEnabled = true;
+var _wraps = [];
+var _iframes = [];
+
+function initFullArticle() {
+  if (_faSyncInitialized) return;
+  _iframes = ['A','B','C','D'].map(k => document.getElementById('faIframe' + k));
+  _wraps = ['A','B','C','D'].map(k => document.getElementById('faFrame' + k));
+  if (_iframes.some(i => !i)) return;
+
+  var scrolling = false;
+
+  function expandAndAttach() {
+    try {
+      var heights = _iframes.map(i => {
+        var d = i.contentDocument || i.contentWindow.document;
+        return d.documentElement.scrollHeight || d.body.scrollHeight;
+      });
+      if (heights.some(h => h < 100)) { setTimeout(expandAndAttach, 300); return; }
+      _iframes.forEach((i, idx) => { i.style.height = heights[idx] + 'px'; });
+
+      _wraps.forEach((wrap, idx) => {
+        wrap.addEventListener('scroll', function() {
+          if (!_faSyncEnabled || scrolling) return;
+          scrolling = true;
+          var max = wrap.scrollHeight - wrap.clientHeight;
+          var ratio = max > 0 ? wrap.scrollTop / max : 0;
+          _wraps.forEach((other, j) => {
+            if (j === idx) return;
+            var om = other.scrollHeight - other.clientHeight;
+            other.scrollTop = ratio * om;
+          });
+          requestAnimationFrame(function() { scrolling = false; });
+        });
+      });
+      _faSyncInitialized = true;
+    } catch(e) { setTimeout(expandAndAttach, 500); }
+  }
+  function waitLoad(iframe) {
+    return new Promise(function(r) {
+      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') r();
+      else iframe.addEventListener('load', r);
+    });
+  }
+  Promise.all(_iframes.map(waitLoad)).then(function() { setTimeout(expandAndAttach, 400); });
+}
+
+// 表示切替
+document.querySelectorAll('.fa-view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fa-view-btn').forEach(b => b.classList.toggle('active', b === btn));
+    var mode = btn.dataset.faview;
+    var frames = document.getElementById('faFrames');
+    frames.className = 'full-article-frames mode-' + mode;
+    if (mode === 'all') frames.style.gridTemplateColumns = 'repeat(4, 1fr)';
+    else if (mode === 'AB') frames.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    else frames.style.gridTemplateColumns = '1fr';
+  });
+});
+
+// 同期スクロール ON/OFF
+document.getElementById('faSyncBtn').addEventListener('click', function() {
+  _faSyncEnabled = !_faSyncEnabled;
+  this.classList.toggle('on', _faSyncEnabled);
+  this.textContent = '🔗 同期スクロール: ' + (_faSyncEnabled ? 'ON' : 'OFF');
+});
+
+// 初期化（デフォルトタブ=全記事プレビュー）
+window.addEventListener('load', function() {
+  setTimeout(initFullArticle, 600);
+});
+</script>
+</body>
+</html>
